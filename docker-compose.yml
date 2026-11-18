@@ -1,0 +1,71 @@
+# TributoCerto — stack completa
+#
+# LOCAL (dev):    rode scripts/clone-upstream.ps1 (clona os repos da Receita em
+#                 upstream/) e `docker compose up -d --build` — os 3 motores são
+#                 buildados aqui mesmo.
+#
+# PRODUÇÃO:       o servidor NÃO tem os fontes upstream/. O workflow
+#                 sync-upstream publica imagens prontas no GHCR (tag do SHA + tag
+#                 `latest`). Configure um `.env` ao lado deste arquivo (ver
+#                 .env.example) apontando *_IMAGE para o GHCR e:
+#                 `docker compose up -d --pull=always`
+#                 (SITE_ADDRESS=seudominio.com.br ativa HTTPS automático no Caddy)
+
+name: tributocerto
+
+services:
+  caddy:
+    image: caddy:2
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80} # local = HTTP na :80; produção = seu domínio
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./web/public:/srv:ro
+      - caddy_data:/data
+    depends_on:
+      - bff
+    restart: unless-stopped
+
+  bff:
+    build: ./bff
+    environment:
+      REGIME_URL: http://regime-regular:8080
+      SIMPLES_URL: http://simples-nacional:8080
+      DANFSE_URL: http://danfse:8080
+      RATE_LIMIT_MAX: "60" # req por janela por IP
+      RATE_LIMIT_WINDOW_MS: "60000"
+    restart: unless-stopped
+
+  regime-regular:
+    # local: builda de upstream/ e tagueia; produção: .env aponta para o GHCR
+    image: ${REGIME_IMAGE:-tributocerto-regime-regular:local}
+    build:
+      context: . # contexto = raiz deste repo (o Dockerfile copia de upstream/)
+      dockerfile: docker/regime-regular.Dockerfile
+    environment:
+      SERVER_PORT: "8080"
+    restart: unless-stopped
+
+  simples-nacional:
+    image: ${SIMPLES_IMAGE:-tributocerto-simples-nacional:local}
+    build:
+      context: .
+      dockerfile: docker/simples-nacional.Dockerfile
+    environment:
+      SERVER_PORT: "8080"
+    restart: unless-stopped
+
+  danfse:
+    image: ${DANFSE_IMAGE:-tributocerto-danfse:local}
+    build:
+      context: ./upstream/calculadora-rtc-gerador-danfse # Dockerfile oficial do repo Go
+    environment:
+      XML_MAX_SIZE_BYTES: "5242880" # 5 MiB, padrão do serviço
+      LOG_LEVEL: info
+    restart: unless-stopped
+
+volumes:
+  caddy_data:

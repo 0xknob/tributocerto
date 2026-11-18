@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tributocerto/tributocerto/docs/formato-export.schema.json",
+  "title": "TributoCerto — arquivo de exportação de cálculo (v1)",
+  "description": "Envelope do arquivo exportado pelo site. 'entrada' e 'resultado' são opacos (payloads das APIs da Receita Federal), exceto o mínimo garantido aqui. Regra de ouro: importar valida só o mínimo e recalcula o resultado.",
+  "type": "object",
+  "required": ["versao", "geradoEm", "tipo", "entrada"],
+  "additionalProperties": true,
+  "properties": {
+    "versao": { "const": 1 },
+    "geradoEm": { "type": "string", "format": "date-time" },
+    "tipo": {
+      "enum": ["calculo-regime-regular", "calculo-simples-nacional", "danfse"]
+    },
+    "entrada": { "type": "object" },
+    "resultado": { "type": "object" },
+    "motor": {
+      "type": "object",
+      "description": "Snapshot de GET /api/status (ok, servicos[], verificadoEm); conteúdo opaco"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "tipo": { "enum": ["calculo-regime-regular", "calculo-simples-nacional"] } },
+        "required": ["tipo"]
+      },
+      "then": {
+        "properties": {
+          "entrada": {
+            "type": "object",
+            "required": ["itens"],
+            "properties": {
+              "itens": { "type": "array", "minItems": 1 }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "tipo": { "const": "danfse" } },
+        "required": ["tipo"]
+      },
+      "then": {
+        "properties": {
+          "entrada": {
+            "type": "object",
+            "required": ["xml"],
+            "properties": {
+              "xml": { "type": "string", "minLength": 1 },
+              "parametros": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "stc": { "enum": [0, 1, 2] },
+                  "canhoto": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "not": {
+          "required": ["resultado"],
+          "description": "PDF é binário: exportação de danfse nunca carrega 'resultado'"
+        }
+      }
+    }
+  ]
+}

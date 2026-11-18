@@ -1,0 +1,16 @@
+{
+  "java.import.exclusions": [
+    "**/node_modules/**",
+    "**/.metadata/**",
+    "**/archetype-resources/**",
+    "**/META-INF/maven/**",
+    "upstream/**"
+  ],
+  "java.configuration.updateBuildConfiguration": "disabled",
+  "java.autobuild.enabled": false,
+  "search.exclude": {
+    "**/upstream": true,
+    "**/node_modules": true
+},
+"java.compile.nullAnalysis.mode": "automatic"
+}

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calculadora RTC — CBS, IBS e DANFSe</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 640px; margin: 3rem auto; padding: 0 1rem; line-height: 1.6;
+    }
+    #status { font-weight: 600; }
+    footer { margin-top: 3rem; opacity: 0.75; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Calculadora CBS · IBS · DANFSe</h1>
+    <p>Motor de cálculo oficial da Receita Federal — site em construção.</p>
+    <ul>
+      <li>Cálculo regime regular (CBS, IBS, Imposto Seletivo — LC 214/2025)</li>
+      <li>Cálculo Simples Nacional (CBS/IBS)</li>
+      <li>Gerador de DANFSe (XML da NFS-e → PDF)</li>
+    </ul>
+    <p id="status">Verificando serviços…</p>
+    <footer>
+      <small>
+        Ferramenta informativa; não substitui contador ou consultoria. Sem vínculo com a
+        Receita Federal. Seus dados são processados em memória e não são armazenados
+        (ver aviso de privacidade).
+      </small>
+    </footer>
+  </main>
+  <script>
+    fetch("/api/status")
+      .then((r) => r.json())
+      .then((s) => {
+        document.getElementById("status").textContent = s.ok
+          ? "✓ Motores de cálculo online"
+          : "⚠ Alguns serviços estão indisponíveis";
+      })
+      .catch(() => {
+        document.getElementById("status").textContent = "⚠ Não foi possível verificar os serviços";
+      });
+  </script>
+</body>
+</html>

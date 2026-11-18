@@ -1,0 +1,17 @@
+# Produção: SITE_ADDRESS=seudominio.com.br → HTTPS automático (Let's Encrypt)
+# Local (padrão): :80 → http://localhost
+{$SITE_ADDRESS}
+
+encode zstd gzip
+
+# API pública → BFF
+handle /api/* {
+	reverse_proxy bff:3000
+}
+
+# Frontend estático (web/public) com fallback para SPA
+handle {
+	root * /srv
+	try_files {path} /index.html
+	file_server
+}

@@ -1,0 +1,44 @@
+{
+  "_exemplo": "Material de teste/documentação. 'entrada' e trechos de 'resultado' vêm do teste de integração oficial SimplesNacionalControllerTest (caso dourado CRT=1: base 950 + Imposto Seletivo 50 fora da receita bruta). Campo extra ignorado na importação.",
+  "versao": 1,
+  "geradoEm": "2026-11-17T12:05:00.000Z",
+  "tipo": "calculo-simples-nacional",
+  "entrada": {
+    "id": "507f1f77bcf86cd799439011",
+    "versao": "2.0.0",
+    "data": "2027-03-15",
+    "tpDoc": "55",
+    "CRT": "1",
+    "itens": [
+      {
+        "numero": 1,
+        "cAtivSN": "01",
+        "cClassTrib": "000001",
+        "baseCalculo": "950.00",
+        "valorImpostoSeletivo": "50.00",
+        "pIBSSN": "1.25",
+        "pCBSSN": "2.75"
+      }
+    ]
+  },
+  "resultado": {
+    "oper": { "data": "2027-03-15", "tpDoc": "55", "CRT": "1" },
+    "objetos": [
+      {
+        "nObj": 1,
+        "estadoItem": "CALCULADO",
+        "tribCalc": {
+          "vRBSNitem": "950.00",
+          "tpRBSN": 1,
+          "tpRBSNDescricao": "Receita bruta - interna",
+          "vBC": "950.00",
+          "pIBSSN": "1.25",
+          "vIBSSN": "11.88",
+          "pCBSSN": "2.75",
+          "vCBSSN": "26.12",
+          "vIBSPendSusp": "0.00"
+        }
+      }
+    ]
+  }
+}

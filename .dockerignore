@@ -1,0 +1,8 @@
+# Reduz o contexto de build dos serviços Java (contexto = raiz deste repo)
+.git
+.github
+web
+docs
+bff
+scripts
+README.md

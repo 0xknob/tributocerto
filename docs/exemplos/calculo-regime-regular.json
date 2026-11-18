@@ -1,0 +1,77 @@
+{
+  "_exemplo": "Material de teste/documentação. 'entrada' é o teste dourado oficial Teste_000001_1 da Receita Federal; 'resultado' traz apenas o item 1 real da saída dourada (a resposta completa inclui todos os itens e o bloco 'total'). Campo extra ignorado na importação.",
+  "versao": 1,
+  "geradoEm": "2026-11-17T12:00:00.000Z",
+  "tipo": "calculo-regime-regular",
+  "entrada": {
+    "id": "6194602ea71cbf9431c236de4409d920",
+    "versao": "0.0.1",
+    "dataHoraEmissao": "2026-01-01T09:50:05-03:00",
+    "municipio": 4314902,
+    "uf": "RS",
+    "itens": [
+      {
+        "numero": 1,
+        "ncm": "24021000",
+        "cst": "000",
+        "cClassTrib": "000001",
+        "baseCalculo": 200,
+        "quantidade": 1,
+        "unidade": "VN"
+      }
+    ]
+  },
+  "resultado": {
+    "objetos": [
+      {
+        "nObj": 1,
+        "tribCalc": {
+          "IS": {
+            "CSTIS": "000",
+            "cClassTribIS": "000001",
+            "vBCIS": "200.00",
+            "pIS": "13.00",
+            "pISEspec": "21.30",
+            "adRemIS": "21.30",
+            "uTrib": "VN",
+            "qTrib": "1",
+            "vIS": "47.30",
+            "memoriaCalculo": "Operação de consumo sujeita à tributação pelo Imposto Seletivo, com enquadramento legal em Art. 412, I, tributada conforme Tributação pelo Imposto Seletivo - Com Cálculo. A base de cálculo utilizada é de R$ 200, com alíquota ad valorem de 13.000000%. A alíquota ad rem é de 21.3."
+          },
+          "IBSCBS": {
+            "CST": "000",
+            "cClassTrib": "000001",
+            "gIBSCBS": {
+              "vBC": "247.30",
+              "gIBSUF": {
+                "pIBSUF": "0.05",
+                "vIBSUF": "0.12",
+                "memoriaCalculo": "Operação de consumo com enquadramento legal em LC 214/2025, tributada conforme Tributação integral. A base de cálculo utilizada é de R$ 247.30000000, com alíquota de 0.050000%."
+              },
+              "gIBSMun": {
+                "pIBSMun": "0.05",
+                "vIBSMun": "0.12",
+                "memoriaCalculo": "Operação de consumo com enquadramento legal em LC 214/2025, tributada conforme Tributação integral. A base de cálculo utilizada é de R$ 247.30000000, com alíquota de 0.050000%."
+              },
+              "vIBS": "0.25",
+              "gCBS": {
+                "pCBS": "8.40",
+                "vCBS": "20.77",
+                "memoriaCalculo": "Operação de consumo com enquadramento legal em LC 214/2025, tributada conforme Tributação integral. A base de cálculo utilizada é de R$ 247.30000000, com alíquota de 8.400000%."
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "motor": {
+    "ok": true,
+    "servicos": [
+      { "servico": "regime-regular", "ok": true, "versao": { "aplicacao": "1.6.1", "base-dados": "V0059 - 30/09/2026" } },
+      { "servico": "simples-nacional", "ok": true, "versao": { "aplicacao": "0.0.6", "base-dados": "V0059 - 30/09/2026" } },
+      { "servico": "danfse", "ok": true, "versao": null }
+    ],
+    "verificadoEm": "2026-11-17T11:59:58.000Z"
+  }
+}

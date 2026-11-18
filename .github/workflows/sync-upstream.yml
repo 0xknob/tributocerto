@@ -1,0 +1,144 @@
+# Mantem as imagens dos motores de calculo em dia com os repos da Receita Federal.
+#
+# Fluxo: diario -> detecta novo commit -> roda os TESTES OFICIAIS da Receita ->
+# builda imagem no GHCR tagueada pelo SHA -> abre um PR atualizando
+# .upstream-versions.json. O deploy so acontece quando VOCE mergeia
+# (controle humano antes de qualquer automacao total).
+
+name: sync-upstream
+
+on:
+  schedule:
+    - cron: "0 9 * * *" # diario, 09:00 UTC (06:00 Brasilia)
+  workflow_dispatch: {} # permite rodar manualmente
+
+permissions:
+  contents: write
+  pull-requests: write
+  packages: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: SHA atual de cada repo upstream
+        id: shas
+        run: |
+          set -euo pipefail
+          get_sha() { git ls-remote "https://github.com/ReceitaFederal/$1.git" HEAD | cut -f1; }
+          {
+            echo "regime=$(get_sha calculadora-rtc-regime-regular)"
+            echo "simples=$(get_sha calculadora-rtc-simples-nacional)"
+            echo "danfse=$(get_sha calculadora-rtc-gerador-danfse)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Houve mudanca desde o ultimo build?
+        id: changed
+        run: |
+          set -euo pipefail
+          changed() { [ "$(jq -r ".$1" .upstream-versions.json)" != "$2" ] && echo true || echo false; }
+          R=$(changed '"regime-regular"' "${{ steps.shas.outputs.regime }}")
+          S=$(changed '"simples-nacional"' "${{ steps.shas.outputs.simples }}")
+          D=$(changed '"danfse"' "${{ steps.shas.outputs.danfse }}")
+          ANY=$([ "$R" = true ] || [ "$S" = true ] || [ "$D" = true ] && echo true || echo false)
+          {
+            echo "regime=$R"; echo "simples=$S"; echo "danfse=$D"; echo "any=$ANY"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Nada mudou — encerrar
+        if: steps.changed.outputs.any != 'true'
+        run: echo "Nenhuma mudanca upstream. Nada a fazer."
+
+      - name: Login no GHCR
+        if: steps.changed.outputs.any == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Clonar repos da Receita
+        if: steps.changed.outputs.any == 'true'
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/ReceitaFederal/calculadora-rtc-regime-regular.git   upstream/calculadora-rtc-regime-regular
+          git clone --depth 1 https://github.com/ReceitaFederal/calculadora-rtc-simples-nacional.git upstream/calculadora-rtc-simples-nacional
+          git clone --depth 1 https://github.com/ReceitaFederal/calculadora-rtc-gerador-danfse.git   upstream/calculadora-rtc-gerador-danfse
+
+      # --- regime-regular: testes oficiais sao o portao de qualidade ---
+      # Cada imagem recebe a tag do SHA (rastreavel, pina em .env) e a tag `latest`
+      # (referenciada pelo .env de producao; so entra em producao no merge do PR).
+      - name: regime-regular - testes oficiais + imagem
+        if: steps.changed.outputs.regime == 'true'
+        run: |
+          set -euo pipefail
+          cd upstream/calculadora-rtc-regime-regular
+          mkdir -p calculadora/db && chmod +x mvnw
+          ./mvnw flyway:migrate -Dflyway.configFiles=./flyway/flyway-pro.conf --batch-mode --errors
+          ./mvnw clean test --batch-mode
+          cd ../..
+          BASE="ghcr.io/${GITHUB_REPOSITORY,,}/regime-regular"
+          docker build -f docker/regime-regular.Dockerfile -t "$BASE:${{ steps.shas.outputs.regime }}" -t "$BASE:latest" .
+          docker push "$BASE:${{ steps.shas.outputs.regime }}"
+          docker push "$BASE:latest"
+
+      - name: simples-nacional - testes oficiais + imagem
+        if: steps.changed.outputs.simples == 'true'
+        run: |
+          set -euo pipefail
+          cd upstream/calculadora-rtc-simples-nacional
+          mkdir -p calculadora/db && chmod +x mvnw
+          ./mvnw flyway:migrate -Dflyway.configFiles=./flyway/flyway-pro.conf --batch-mode --errors
+          ./mvnw clean test --batch-mode
+          cd ../..
+          BASE="ghcr.io/${GITHUB_REPOSITORY,,}/simples-nacional"
+          docker build -f docker/simples-nacional.Dockerfile -t "$BASE:${{ steps.shas.outputs.simples }}" -t "$BASE:latest" .
+          docker push "$BASE:${{ steps.shas.outputs.simples }}"
+          docker push "$BASE:latest"
+
+      - name: danfse - testes oficiais + imagem
+        if: steps.changed.outputs.danfse == 'true'
+        run: |
+          set -euo pipefail
+          cd upstream/calculadora-rtc-gerador-danfse
+          go test ./...
+          cd ../..
+          BASE="ghcr.io/${GITHUB_REPOSITORY,,}/danfse"
+          docker build -t "$BASE:${{ steps.shas.outputs.danfse }}" -t "$BASE:latest" upstream/calculadora-rtc-gerador-danfse
+          docker push "$BASE:${{ steps.shas.outputs.danfse }}"
+          docker push "$BASE:latest"
+
+      - name: Registrar novas versoes
+        if: steps.changed.outputs.any == 'true'
+        run: |
+          jq \
+            --arg r "${{ steps.shas.outputs.regime }}" \
+            --arg s "${{ steps.shas.outputs.simples }}" \
+            --arg d "${{ steps.shas.outputs.danfse }}" \
+            '."regime-regular"=$r | ."simples-nacional"=$s | ."danfse"=$d' \
+            .upstream-versions.json > .upstream-versions.json.tmp && mv .upstream-versions.json.tmp .upstream-versions.json
+
+      - name: Abrir PR de atualizacao
+        if: steps.changed.outputs.any == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: chore/sync-upstream
+          commit-message: "chore(upstream): novas versoes dos motores de calculo"
+          title: "Motores de calculo: atualizacao automatica (Receita Federal)"
+          body: |
+            Novos commits detectados nos repos da Receita Federal:
+
+            | Servico | Novo SHA |
+            |---|---|
+            | regime-regular | `${{ steps.shas.outputs.regime }}` |
+            | simples-nacional | `${{ steps.shas.outputs.simples }}` |
+            | danfse | `${{ steps.shas.outputs.danfse }}` |
+
+            Os testes oficiais passaram no CI. Apos o merge, o workflow `deploy` atualiza a producao.
+
+            Checklist antes do merge:
+            - [ ] Revise o diff do repo upstream (link acima)
+            - [ ] Rode os testes dourados (se implementados)
+            - [ ] Valide em staging antes de producao (quando existir)

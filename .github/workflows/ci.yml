@@ -1,0 +1,46 @@
+# CI de cada push/PR: rápido e independente dos motores de cálculo.
+# - formato de exportação: exemplos + validador de referência
+# - BFF: dependências travadas, sintaxe, build da imagem
+# - docker-compose.yml: interpolação de variáveis sempre válida
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Formato de exportação (docs/formato-export.md v1)
+        run: node scripts/validar-export.mjs
+
+      - name: BFF - instalar dependencias (npm ci, lockfile travado)
+        working-directory: bff
+        run: npm ci --ignore-scripts
+
+      - name: BFF - sintaxe
+        working-directory: bff
+        run: |
+          node --check src/server.js
+          node --check src/config.js
+
+      - name: BFF - build da imagem
+        run: docker build -t tributocerto-bff:ci bff
+
+      - name: docker-compose.yml - configuracao valida (local e producao)
+        run: |
+          docker compose config --quiet
+          REGIME_IMAGE=ghcr.io/exemplo/tributocerto/regime-regular:latest \
+          SIMPLES_IMAGE=ghcr.io/exemplo/tributocerto/simples-nacional:latest \
+          DANFSE_IMAGE=ghcr.io/exemplo/tributocerto/danfse:latest \
+          SITE_ADDRESS=exemplo.com.br \
+          docker compose config --quiet

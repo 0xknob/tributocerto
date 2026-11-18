@@ -1,0 +1,19 @@
+{
+  "name": "bff-calculadora-rtc",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "BFF do site de cálculo CBS/IBS/DANFSe — processamento efêmero, zero persistência",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "fastify": "^5.0.0",
+    "@fastify/helmet": "^12.0.0",
+    "@fastify/rate-limit": "^10.0.0",
+    "pino": "^9.0.0"
+  }
+}

@@ -1,0 +1,40 @@
+# Deploy em producao: disparado por push na main (ex.: merge do PR do sync-upstream)
+# ou manualmente. Conecta via SSH no servidor e recria a stack.
+#
+# No servidor (uma unica vez):
+#   1. clone este repo em /opt/tributocerto (ou ajuste o caminho abaixo)
+#   2. crie /opt/tributocerto/.env a partir de .env.example
+#      (imagens GHCR + SITE_ADDRESS) — o servidor NAO precisa dos fontes upstream
+#
+# Segredos necessarios no GitHub (Settings > Secrets and variables > Actions):
+#   SSH_HOST  - ex.: 203.0.113.10
+#   SSH_USER  - usuario com acesso ao diretorio do projeto
+#   SSH_KEY   - chave privada (ed25519 recomendado) cuja publica esta no servidor
+
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -euo pipefail
+            cd /opt/tributocerto
+            git pull --ff-only
+            # BFF e' nosso codigo: builda. Motores de calculo: imagem pronta do GHCR
+            # (definida no .env do servidor) — puxada pelo --pull=always abaixo.
+            docker compose build bff
+            docker compose up -d --pull=always
+            docker image prune -f
+            docker compose ps

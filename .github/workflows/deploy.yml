@@ -20,6 +20,11 @@ on:
 
 jobs:
   deploy:
+    # Neutro ate o servidor existir: quando criar, adicione a variavel
+    # DEPLOY_READY = true em Settings > Secrets and variables > Actions >
+    # Variables (aba "Actions variables"). Ate la, este workflow pula em
+    # silencio em vez de falhar a cada push.
+    if: vars.DEPLOY_READY == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Deploy via SSH

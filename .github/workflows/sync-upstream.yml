@@ -67,6 +67,23 @@ jobs:
           git clone --depth 1 https://github.com/ReceitaFederal/calculadora-rtc-simples-nacional.git upstream/calculadora-rtc-simples-nacional
           git clone --depth 1 https://github.com/ReceitaFederal/calculadora-rtc-gerador-danfse.git   upstream/calculadora-rtc-gerador-danfse
 
+      # Mesmo ambiente dos CI oficiais da Receita (publish-jacoco-report.yml /
+      # go-coverage.yml): JDK 21 temurin e Go pela versão do go.mod deles.
+      # Sem isto o mvnw morre em segundos no runner (JDK default divergente).
+      - name: JDK 21 (temurin)
+        if: steps.changed.outputs.any == 'true'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Go (versao exigida pelo repo danfse)
+        if: steps.changed.outputs.any == 'true'
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: upstream/calculadora-rtc-gerador-danfse/go.mod
+          cache-dependency-path: upstream/calculadora-rtc-gerador-danfse/go.sum
+
       # --- regime-regular: testes oficiais sao o portao de qualidade ---
       # Cada imagem recebe a tag do SHA (rastreavel, pina em .env) e a tag `latest`
       # (referenciada pelo .env de producao; so entra em producao no merge do PR).

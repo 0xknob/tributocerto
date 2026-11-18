@@ -106,6 +106,9 @@ jobs:
         run: |
           set -euo pipefail
           cd upstream/calculadora-rtc-simples-nacional
+          # ADR009 deles: scripts Flyway so existem no repo regime-regular
+          # (banco compartilhado) — copiar do irmao, como faz o Dockerfile
+          cp -r ../calculadora-rtc-regime-regular/flyway ./flyway
           mkdir -p calculadora/db && chmod +x mvnw
           ./mvnw flyway:migrate -Dflyway.configFiles=./flyway/flyway-pro.conf --batch-mode --errors
           ./mvnw clean test --batch-mode

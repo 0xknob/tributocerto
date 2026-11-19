@@ -1,6 +1,6 @@
 {
   "_doc": "SHA do commit de cada repo da Receita em producao. Atualizado pelo workflow sync-upstream (via PR). Vazio = ainda nao buildado.",
-  "regime-regular": "",
-  "simples-nacional": "",
-  "danfse": ""
+  "regime-regular": "150cccbe414d4a5edea703e4f7a424af5aa222c7",
+  "simples-nacional": "c5b0f01c8351c3f0d0795cc617b29d233e9f98df",
+  "danfse": "8d79e6b2f7fad6375340afcb51c85ed370c64a14"
 }

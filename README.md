@@ -27,9 +27,9 @@ atualização controlada por CI com os testes oficiais da Receita como portão.
 ├── docker-compose.yml          # stack completa (local builda; produção usa GHCR via .env)
 ├── .env.example                # modelo do .env de produção (imagens GHCR + domínio)
 ├── Caddyfile                   # reverse proxy, HTTPS automático, front estático
-├── docker/                     # Dockerfiles dos 2 serviços Java (o Go usa o oficial)
+├── docker/                     # Dockerfiles: 2 serviços Java, caddy (frontend embutido)
 ├── bff/                        # BFF Fastify (proxy seguro, /api/status, efemeridade)
-├── web/public/                 # frontend (placeholder; React entra aqui depois)
+├── web/                        # frontend React/Vite (build dentro do Docker, sem Node no host)
 ├── scripts/clone-upstream.ps1  # clona os repos da Receita em upstream/
 ├── scripts/validar-export.mjs  # validador do formato de exportação (docs/formato-export.md)
 ├── .upstream-versions.json     # SHAs em produção (atualizado pelo CI via PR)
@@ -46,6 +46,18 @@ container).
 powershell -File scripts/clone-upstream.ps1   # clona os 3 repos em upstream/
 docker compose up -d --build
 ```
+
+> Se o build do compose reclamar de `additional privileges requested (fs.read=…)`
+> (Docker Desktop com sandbox endurecido), faça o build manual e suba sem `--build`:
+>
+> ```powershell
+> docker build -f docker/regime-regular.Dockerfile -t tributocerto-regime-regular:local .
+> docker build -f docker/simples-nacional.Dockerfile -t tributocerto-simples-nacional:local .
+> docker build -t tributocerto-danfse:local upstream/calculadora-rtc-gerador-danfse
+> docker build -t tributocerto-bff bff
+> docker build -f docker/caddy.Dockerfile -t tributocerto-caddy .
+> docker compose up -d
+> ```
 
 - Site: http://localhost
 - Swagger dos serviços (direto, sem o BFF):
@@ -110,10 +122,13 @@ todo push na `main` roda o `deploy.yml`. Detalhes no cabeçalho do workflow.
 
 ## Roadmap
 
-- [ ] Frontend React (3 telas + consultas de tabelas + rodapé com `/api/status`)
+- [x] Frontend React/Vite — 3 telas de cálculo + Tabelas Oficiais (NCM/NBS/municípios/atividades)
+      + rodapé com `/api/status`; export/import no formato v1; rascunho em localStorage
+      (build embutido na imagem Caddy — nenhum Node no host/servidor)
 - [x] Export/import de cálculos — formato v1 especificado ([docs/formato-export.md](docs/formato-export.md),
-      schema + exemplos + validador de referência); a UI de export/import entra com o frontend
+      schema + exemplos + validador de referência) **e implementado na UI**
 - [x] CI no GitHub (`ci.yml` a cada push/PR; `sync-upstream.yml` diário com testes oficiais + PR)
+- [ ] Merge do PR do sync (branch `chore/sync-upstream` já subiu) + packages GHCR públicas
 - [ ] Servidor de produção + secrets SSH do `deploy.yml`
 - [ ] Testes dourados no CI (entradas/saídas congeladas; diff → revisão manual)
 - [ ] Staging + smoke test antes do deploy de produção

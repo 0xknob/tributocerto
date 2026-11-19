@@ -15,7 +15,10 @@ name: tributocerto
 
 services:
   caddy:
-    image: caddy:2
+    # Frontend embutido no estágio de build (docker/caddy.Dockerfile)
+    build:
+      context: .
+      dockerfile: docker/caddy.Dockerfile
     ports:
       - "80:80"
       - "443:443"
@@ -23,7 +26,6 @@ services:
       SITE_ADDRESS: ${SITE_ADDRESS:-:80} # local = HTTP na :80; produção = seu domínio
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./web/public:/srv:ro
       - caddy_data:/data
     depends_on:
       - bff

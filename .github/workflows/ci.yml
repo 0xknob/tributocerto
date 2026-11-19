@@ -36,6 +36,9 @@ jobs:
       - name: BFF - build da imagem
         run: docker build -t tributocerto-bff:ci bff
 
+      - name: Web - build do frontend (via imagem caddy, roda o vite build)
+        run: docker build -f docker/caddy.Dockerfile -t tributocerto-caddy:ci .
+
       - name: docker-compose.yml - configuracao valida (local e producao)
         run: |
           docker compose config --quiet

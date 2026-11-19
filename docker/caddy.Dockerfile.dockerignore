@@ -1,0 +1,7 @@
+# BuildKit usa este arquivo (específico do caddy.Dockerfile) NO LUGAR do
+# .dockerignore raiz — que exclui web/ para enxugar os builds Java.
+# Aqui: somente web/ entra no contexto.
+*
+!web
+web/node_modules
+web/dist
